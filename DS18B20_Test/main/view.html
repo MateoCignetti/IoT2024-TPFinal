@@ -1,0 +1,87 @@
+<!DOCTYPE html>                                                                             <!-- Specifies the document type and version of HTML -->
+<html lang="en">                                                                            <!-- Sets the language of the document to English -->
+
+<head>
+    <meta charset="UTF-8">                                                                  <!-- Defines the character encoding for the document -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">                  <!-- Configures the viewport for responsive design -->
+    <title>Configuración de Red</title>                                                     <!-- Sets the title of the web page -->
+    
+    <!-- Styling for the web page -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;                     /* Sets the font family for the entire document */
+            text-align: center;                                 /* Aligns text to the center */
+            background-color: #f0f0f0;                        /* Sets the background color of the body */  
+            margin: 0;                                          /* Removes margin around the body */
+            padding: 0;                                         /* Removes padding around the body */    
+        }
+
+        h2 {
+            color: #333;                                      /* Sets the color of heading text */
+            margin-bottom: 20px;                                /* Adds margin at the bottom of the heading */
+        }
+
+        .container {
+            width: 50%;                                         /* Sets the width of the container */
+            margin: 20px auto;                                  /* Centers the container horizontally and adds margin */
+            background-color: #fff;                           /* Sets the background color of the container */
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);      /* Adds a subtle shadow to the container */
+            padding: 20px;                                      /* Adds padding inside the container */
+            border-radius: 10px;                                /* Rounds the corners of the container */
+        }
+
+        .form-group {
+            margin-bottom: 20px;                                /* Adds margin at the bottom of form groups */
+        }
+
+        .form-group label {
+            font-weight: bold;                                  /* Makes form labels bold */
+            display: block;                                     /* Displays labels as block elements */
+            margin-bottom: 5px;                                 /* Adds margin at the bottom of labels */
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            /* Styles for text and password input fields */
+            width: calc(100% - 22px);                           /* Calculates the width of input fields */
+            padding: 10px;                                      /* Adds padding inside input fields */    
+            font-size: 16px;                                    /* Sets the font size of input text */
+            border: 1px solid #ccc;                           /* Sets border style and color */
+            border-radius: 5px;                                 /* Rounds the corners of input fields */
+            margin-bottom: 10px;                                /* Adds margin at the bottom of input fields */    
+            max-width: 200px;                                   /* Limits the width of input fields to prevent extremely long entries */
+        }
+
+        .form-group input[type="submit"] {
+            /* Styles for submit button */
+            background-color: #4caf50;                        /* Sets the background color of the button */
+            color: #fff;                                      /* Sets the text color of the button */
+            padding: 10px 20px;                                 /* Adds padding inside the button */
+            border: none;                                       /* Removes button border */
+            border-radius: 5px;                                 /* Rounds the corners of the button */
+            cursor: pointer;                                    /* Sets cursor style to pointer on hover */    
+            font-size: 18px;                                    /* Sets the font size of button text */
+        }
+
+        .form-group input[type="submit"]:hover {
+            background-color: #45a049;                        /* Changes button color on hover */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Configuración de Red</h2>
+        <form action="/post_data" method="post" class="form-group">
+            <label for="nombreRed">Nombre de Red:</label>
+            <input type="text" id="nombreRed" name="n" maxlength="50" required><br>
+
+            <label for="contrasena">Contraseña:</label>
+            <input type="password" id="contrasena" name="p" maxlength="50" required><br>
+
+            <input type="submit" value="Enviar">
+        </form>
+    </div>
+</body>
+
+</html>
