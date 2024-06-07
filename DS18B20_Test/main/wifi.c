@@ -1,67 +1,87 @@
-//Includes --------------------------------------------------------------------------------------------------------------
 #include "wifi.h"
 
-//Defines ---------------------------------------------------------------------------------------------------------------
-#define AP_SSID     "P18-APtoSTA"   //AP Wi-Fi network SSID
-#define AP_PASSWORD "holamundo"     //AP Wi-Fi network password
+#define EXAMPLE_ESP_WIFI_SSID      "Alejo"
+#define EXAMPLE_ESP_WIFI_PASS      "Alejo123"
+#define EXAMPLE_ESP_MAXIMUM_RETRY  5
+#define WIFI_CONNECTED_BIT BIT0
+#define WIFI_FAIL_BIT      BIT1
 
-//Private function prototypes -------------------------------------------------------------------------------------------
-static void wifi_lwip_init();       //Initialize LightweightIP network stack (TCP/IP protocol) and Wi-Fi driver
-static void wifi_config_AP();       //Configure Wi-Fi connection in AP mode with specified SSID and password
-static void wifi_start();           //Start Wi-Fi connection in AP mode
+static EventGroupHandle_t s_wifi_event_group;
+static const char *TAG = "wifi station";
+static int s_retry_num = 0;
 
-//Functions -------------------------------------------------------------------------------------------------------------
-
-//Configure and initialize Wi-Fi as AP mode
-void setup_wifi_AP(){
-    wifi_lwip_init();
-    wifi_config_AP();
-    wifi_start();
-}
-
-//Initialize LightweightIP network stack (TCP/IP protocol) and Wi-Fi driver
-static void wifi_lwip_init(){
-    nvs_flash_init();                       //Initialize non-volatile flash memory (NVS) for configuration storage
-    esp_netif_init();                       //Initialize ESP-IDF network interface
-    esp_event_loop_create_default();        //Create a default event loop to handle network events #NOT DEVELOPED
-    esp_netif_create_default_wifi_ap();     //Create a Wi-Fi interface in access point (AP) mode
-    wifi_init_config_t wifi_config = WIFI_INIT_CONFIG_DEFAULT(); //Default Wi-Fi configuration
-    wifi_config.nvs_enable = 0;             //Disable NVS usage for Wi-Fi configuration
-    esp_wifi_init(&wifi_config);            //Initialize Wi-Fi driver with default configuration
-}
-
-//Configure Wi-Fi connection in AP mode with specified SSID and password
-static void wifi_config_AP(){
-    wifi_config_t wifi_config = {
-        .ap = {
-            .ssid = AP_SSID,                //Set Wi-Fi network SSID
-            .password = AP_PASSWORD,        //Set Wi-Fi network password
-            .ssid_len = strlen(AP_SSID),    //Calculate SSID length
-            .authmode = WIFI_AUTH_WPA2_PSK, //Set authentication mode (WPA2-PSK)
-            .max_connection = 5,            //Set maximum number of allowed clients
+static void event_handler(void* arg, esp_event_base_t event_base,
+                                int32_t event_id, void* event_data)
+{
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+        esp_wifi_connect();
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
+            esp_wifi_connect();
+            s_retry_num++;
+            ESP_LOGI(TAG, "retry to connect to the AP");
+        } else {
+            xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
         }
+        ESP_LOGI(TAG,"connect to the AP fail");
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+        s_retry_num = 0;
+        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+    }
+}
+
+void wifi_init_sta(void)
+{
+    s_wifi_event_group = xEventGroupCreate();
+
+    ESP_ERROR_CHECK(esp_netif_init());
+
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    esp_netif_create_default_wifi_sta();
+
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    esp_event_handler_instance_t instance_any_id;
+    esp_event_handler_instance_t instance_got_ip;
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
+                                                        ESP_EVENT_ANY_ID,
+                                                        &event_handler,
+                                                        NULL,
+                                                        &instance_any_id));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
+                                                        IP_EVENT_STA_GOT_IP,
+                                                        &event_handler,
+                                                        NULL,
+                                                        &instance_got_ip));
+
+    wifi_config_t wifi_config = {
+        .sta = {
+            .ssid = EXAMPLE_ESP_WIFI_SSID,
+            .password = EXAMPLE_ESP_WIFI_PASS,
+        },
     };
-    esp_wifi_set_mode(WIFI_MODE_AP);        //Set Wi-Fi mode to access point (AP) mode
-    esp_wifi_set_config(WIFI_IF_AP, &wifi_config);  //Set AP mode parameters with the provided configuration
-}
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+    ESP_ERROR_CHECK(esp_wifi_start() );
 
-//Configure Wi-Fi connection in STA mode with specified SSID and password
-void wifi_config_STA(const char *STA_SSID, const char *STA_PASSWORD){
-    esp_netif_create_default_wifi_sta();    //Create a Wi-Fi interface in station (STA) mode
-    wifi_config_t wifi_config_station;      //Define Wi-Fi configuration structure
+    ESP_LOGI(TAG, "wifi_init_sta finished.");
 
-    //Copy the SSID and password to the Wi-Fi configuration structure
-    strcpy((char *)wifi_config_station.sta.ssid, STA_SSID);
-    strcpy((char *)wifi_config_station.sta.password, STA_PASSWORD);
+    EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
+            WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
+            pdFALSE,
+            pdFALSE,
+            portMAX_DELAY);
 
-    printf("SSID: %s\t", wifi_config_station.sta.ssid);           //For DEBUG
-    printf("Password: %s\n", wifi_config_station.sta.password);   //For DEBUG
-
-    esp_wifi_set_mode(WIFI_MODE_STA);                        //Set Wi-Fi mode to station (STA) mode
-    esp_wifi_set_config(WIFI_IF_STA, &wifi_config_station);  //Set STA mode parameters with the provided configuration
-    esp_wifi_connect();
-}
-
-static void wifi_start(){
-    esp_wifi_start();       //Start the Wi-Fi connection
+    if (bits & WIFI_CONNECTED_BIT) {
+        ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
+                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+    } else if (bits & WIFI_FAIL_BIT) {
+        ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
+                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+    } else {
+        ESP_LOGE(TAG, "UNEXPECTED EVENT");
+    }
 }
