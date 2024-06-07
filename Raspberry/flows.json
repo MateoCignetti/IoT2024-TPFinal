@@ -1,0 +1,27 @@
+[
+    {
+        "id": "b497f96967873663",
+        "type": "inject",
+        "z": "5887a4454dc3ff1a",
+        "name": "Select sensors",
+        "props": [
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "SELECT * FROM Temperature INNER JOIN Measurement ON Temperature.SensorID = Measurement.SensorID AND Temperature.MeasurementID = Measurement.MeasurementID",
+        "x": 260,
+        "y": 360,
+        "wires": [
+            [
+                "57f9df24aae9f9a9"
+            ]
+        ],
+        "info": "SELECT * from Sensors;"
+    }
+]
