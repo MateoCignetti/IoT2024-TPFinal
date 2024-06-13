@@ -1,7 +1,7 @@
 #ifndef WIFI_H
 #define WIFI_H
 
-//Includes --------------------------------------------------------------------------------------------------------------
+//Includes
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -14,7 +14,7 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-//Public function prototypes --------------------------------------------------------------------------------------------
+//Public function prototypes
 void wifi_init_sta(void);
 
 #endif

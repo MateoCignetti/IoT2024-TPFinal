@@ -1,8 +1,8 @@
 #include "wifi.h"
 
-#define EXAMPLE_ESP_WIFI_SSID      "Alejo"
-#define EXAMPLE_ESP_WIFI_PASS      "Alejo123"
-#define EXAMPLE_ESP_MAXIMUM_RETRY  5
+#define ESP_WIFI_SSID      "Alejo"      //Configure SSID
+#define ESP_WIFI_PASS      "Alejo123"   //Configure PASSWORD
+#define EXAMPLE_ESP_MAXIMUM_RETRY  10
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT      BIT1
 
@@ -59,8 +59,8 @@ void wifi_init_sta(void)
 
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = EXAMPLE_ESP_WIFI_SSID,
-            .password = EXAMPLE_ESP_WIFI_PASS,
+            .ssid = ESP_WIFI_SSID,
+            .password = ESP_WIFI_PASS,
         },
     };
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
@@ -77,10 +77,10 @@ void wifi_init_sta(void)
 
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
-                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+                 ESP_WIFI_SSID, ESP_WIFI_PASS);
     } else if (bits & WIFI_FAIL_BIT) {
         ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
-                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+                 ESP_WIFI_SSID, ESP_WIFI_PASS);
     } else {
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
     }
