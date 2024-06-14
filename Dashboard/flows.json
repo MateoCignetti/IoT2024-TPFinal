@@ -1,0 +1,229 @@
+[
+    {
+        "id": "66389bf566fd4d78",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "141fca40513ece8d",
+        "type": "mqtt in",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "topic": "sensor_1_send",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "61d8caf8bdb508ad",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 180,
+        "wires": [
+            [
+                "cd9af9d6e32cb54c"
+            ]
+        ]
+    },
+    {
+        "id": "07d1d6fc4007071f",
+        "type": "debug",
+        "z": "66389bf566fd4d78",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 640,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "73338e9acf77412e",
+        "type": "ui_gauge",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "group": "17e6c037d535ae64",
+        "order": 0,
+        "width": "0",
+        "height": "0",
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "°C",
+        "format": "{{msg.measurement.temperature}}",
+        "min": 0,
+        "max": "70",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 650,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "cd9af9d6e32cb54c",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "function 1",
+        "func": "var payload = msg.payload;\n\nvar parts = payload.split(\", \");\n\nvar temp = parseFloat(parts[0]);\nvar hum = parseInt(parts[1]);\n\nmsg.measurement = {\n    timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '),\n    temperature: temp,\n    humidity: hum\n};\n\nmsg.topic = `INSERT INTO Measurement (SensorID, date_time, temperature, humidity) VALUES (1, '${msg.measurement.timestamp}', ${msg.measurement.temperature}, ${msg.measurement.humidity});`;\n\nmsg.payload = {\n    temperature: temp,\n    humidity: hum\n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 180,
+        "wires": [
+            [
+                "07d1d6fc4007071f",
+                "73338e9acf77412e",
+                "1e9a23b58cd8f08e",
+                "8c8162c14e889c1c"
+            ]
+        ]
+    },
+    {
+        "id": "1e9a23b58cd8f08e",
+        "type": "ui_gauge",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "group": "17e6c037d535ae64",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Humidity",
+        "label": "%",
+        "format": "{{msg.measurement.humidity}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 640,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "4bed3fe823846c87",
+        "type": "ui_table",
+        "z": "66389bf566fd4d78",
+        "group": "17e6c037d535ae64",
+        "name": "",
+        "order": 2,
+        "width": "0",
+        "height": "0",
+        "columns": [
+            {
+                "field": "Temperature",
+                "title": "Temperature",
+                "width": "150",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "Humidity",
+                "title": "Humidity",
+                "width": "150",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            }
+        ],
+        "outputs": 1,
+        "cts": true,
+        "x": 810,
+        "y": 420,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "8c8162c14e889c1c",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "function 2",
+        "func": "var tableData = flow.get(\"savedData\") || [];\n\ntableData.unshift(\n    {\n        \"Temperature\": msg.payload.measurement.temperature,\n        \"Humidity\": msg.payload.measurement.humidity\n    }\n);\n\nmsg.payload = tableData;\nflow.set(\"savedData\", tableData);\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 420,
+        "wires": [
+            [
+                "4bed3fe823846c87"
+            ]
+        ]
+    },
+    {
+        "id": "61d8caf8bdb508ad",
+        "type": "mqtt-broker",
+        "name": "Alejo:LocalHost",
+        "broker": "127.0.0.1",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "17e6c037d535ae64",
+        "type": "ui_group",
+        "name": "PIPON",
+        "tab": "c4d4e4adc2a677e3",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "c4d4e4adc2a677e3",
+        "type": "ui_tab",
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
