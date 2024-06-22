@@ -8,40 +8,58 @@
         "env": []
     },
     {
-        "id": "141fca40513ece8d",
-        "type": "mqtt in",
+        "id": "d89d62b8544ae029",
+        "type": "sqlite",
         "z": "66389bf566fd4d78",
-        "name": "",
-        "topic": "sensor_1_send",
-        "qos": "2",
-        "datatype": "auto-detect",
-        "broker": "61d8caf8bdb508ad",
-        "nl": false,
-        "rap": true,
-        "rh": 0,
-        "inputs": 0,
-        "x": 140,
-        "y": 180,
+        "mydb": "396207203f0698c5",
+        "sqlquery": "fixed",
+        "sql": "SELECT * FROM Measurement WHERE SensorID=1 ORDER BY MeasurementID DESC LIMIT 1",
+        "name": "NSH Database",
+        "x": 300,
+        "y": 460,
         "wires": [
             [
-                "cd9af9d6e32cb54c"
+                "3bc70cf8524bf23f"
             ]
         ]
     },
     {
-        "id": "07d1d6fc4007071f",
+        "id": "3bc70cf8524bf23f",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "Parse S1 dahsboard",
+        "func": "var data = msg.payload[0];\n\n//var measurement = {\n//    date_time: data.date_time,\n//    temperature: data.temperature,\n//    humidity: data.humidity\n//};\nmsg.payload = {\n    temperature: data.temperature,\n    humidity: data.humidity,\n    date: data.date_time\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 460,
+        "wires": [
+            [
+                "9278a9487b6d73e1",
+                "73338e9acf77412e",
+                "1e9a23b58cd8f08e"
+            ]
+        ]
+    },
+    {
+        "id": "9278a9487b6d73e1",
         "type": "debug",
         "z": "66389bf566fd4d78",
-        "name": "debug 1",
+        "name": "debug 12",
         "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "false",
+        "complete": "payload",
+        "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 640,
-        "y": 180,
+        "x": 780,
+        "y": 460,
         "wires": []
     },
     {
@@ -49,14 +67,14 @@
         "type": "ui_gauge",
         "z": "66389bf566fd4d78",
         "name": "",
-        "group": "17e6c037d535ae64",
-        "order": 0,
-        "width": "0",
-        "height": "0",
+        "group": "39ca936b7d56a15e",
+        "order": 1,
+        "width": 5,
+        "height": 3,
         "gtype": "gage",
         "title": "Temperature",
         "label": "°C",
-        "format": "{{msg.measurement.temperature}}",
+        "format": "{{msg.payload.temperature}}",
         "min": 0,
         "max": "70",
         "colors": [
@@ -68,45 +86,23 @@
         "seg2": "",
         "diff": false,
         "className": "",
-        "x": 650,
-        "y": 260,
+        "x": 790,
+        "y": 520,
         "wires": []
-    },
-    {
-        "id": "cd9af9d6e32cb54c",
-        "type": "function",
-        "z": "66389bf566fd4d78",
-        "name": "function 1",
-        "func": "var payload = msg.payload;\n\nvar parts = payload.split(\", \");\n\nvar temp = parseFloat(parts[0]);\nvar hum = parseInt(parts[1]);\n\nmsg.measurement = {\n    timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '),\n    temperature: temp,\n    humidity: hum\n};\n\nmsg.topic = `INSERT INTO Measurement (SensorID, date_time, temperature, humidity) VALUES (1, '${msg.measurement.timestamp}', ${msg.measurement.temperature}, ${msg.measurement.humidity});`;\n\nmsg.payload = {\n    temperature: temp,\n    humidity: hum\n};\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 380,
-        "y": 180,
-        "wires": [
-            [
-                "07d1d6fc4007071f",
-                "73338e9acf77412e",
-                "1e9a23b58cd8f08e",
-                "8c8162c14e889c1c"
-            ]
-        ]
     },
     {
         "id": "1e9a23b58cd8f08e",
         "type": "ui_gauge",
         "z": "66389bf566fd4d78",
         "name": "",
-        "group": "17e6c037d535ae64",
-        "order": 0,
-        "width": 0,
-        "height": 0,
+        "group": "39ca936b7d56a15e",
+        "order": 2,
+        "width": 5,
+        "height": 3,
         "gtype": "gage",
         "title": "Humidity",
         "label": "%",
-        "format": "{{msg.measurement.humidity}}",
+        "format": "{{msg.payload.humidity}}",
         "min": 0,
         "max": "100",
         "colors": [
@@ -118,20 +114,48 @@
         "seg2": "",
         "diff": false,
         "className": "",
-        "x": 640,
-        "y": 340,
+        "x": 780,
+        "y": 600,
         "wires": []
+    },
+    {
+        "id": "8c8162c14e889c1c",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "function 2",
+        "func": "var tableData1;\n\ntableData1 = flow.get(\"savedData1\") || [];\n\ntableData1.unshift({\n        \"Temperature\": msg.payload.temperature,\n        \"Humidity\": msg.payload.humidity,\n        \"Date\": msg.payload.date\n    });\n\nmsg.payload = tableData1;\n\nflow.set(\"savedData1\", tableData1);\nreturn msg;\n/*var tableData1 = flow.get(\"savedData1\") || [];\nvar newEntry = {\n    \"Temperature\": msg.payload.temperature,\n    \"Humidity\": msg.payload.humidity,\n    \"Date\": msg.payload.date\n};\n\n// Comparar los datos nuevos con el último registro\nvar lastEntry = tableData1[0] || {};\nif (JSON.stringify(newEntry) !== JSON.stringify(lastEntry)) {\n    // Si los datos son diferentes, agregar el nuevo registro al inicio de la tabla\n    tableData1.unshift(newEntry);\n    // Mantener solo los últimos N registros (opcional)\n    if (tableData1.length > 10) tableData1.pop(); // Ajusta este número según tus necesidades\n    // Actualizar el contexto con los nuevos datos\n    flow.set(\"savedData1\", tableData1);\n    // Enviar el mensaje con los datos actualizados\n    msg.payload = tableData1;\n    return msg;\n} else {\n    // Si los datos son iguales, no enviar el mensaje (detener el flujo)\n    return null;\n}*/\n\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1160,
+        "y": 500,
+        "wires": [
+            []
+        ]
     },
     {
         "id": "4bed3fe823846c87",
         "type": "ui_table",
         "z": "66389bf566fd4d78",
-        "group": "17e6c037d535ae64",
+        "group": "39ca936b7d56a15e",
         "name": "",
-        "order": 2,
-        "width": "0",
-        "height": "0",
+        "order": 5,
+        "width": 10,
+        "height": 4,
         "columns": [
+            {
+                "field": "Date",
+                "title": "Measurement Date",
+                "width": "200",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
             {
                 "field": "Temperature",
                 "title": "Temperature",
@@ -155,25 +179,430 @@
         ],
         "outputs": 1,
         "cts": true,
-        "x": 810,
-        "y": 420,
+        "x": 790,
+        "y": 680,
         "wires": [
             []
         ]
     },
     {
-        "id": "8c8162c14e889c1c",
+        "id": "d1e3b9b461378a61",
+        "type": "sqlite",
+        "z": "66389bf566fd4d78",
+        "mydb": "396207203f0698c5",
+        "sqlquery": "fixed",
+        "sql": "SELECT * FROM Measurement WHERE SensorID=2 ORDER BY MeasurementID DESC LIMIT 1",
+        "name": "NSH Database",
+        "x": 300,
+        "y": 820,
+        "wires": [
+            [
+                "f294aa64593cdd79"
+            ]
+        ]
+    },
+    {
+        "id": "f294aa64593cdd79",
         "type": "function",
         "z": "66389bf566fd4d78",
-        "name": "function 2",
-        "func": "var tableData = flow.get(\"savedData\") || [];\n\ntableData.unshift(\n    {\n        \"Temperature\": msg.payload.measurement.temperature,\n        \"Humidity\": msg.payload.measurement.humidity\n    }\n);\n\nmsg.payload = tableData;\nflow.set(\"savedData\", tableData);\nreturn msg;\n",
+        "name": "Parse S2 dahsboard",
+        "func": "var data = msg.payload[0];\n\n//var measurement = {\n//    date_time: data.date_time,\n//    temperature: data.temperature,\n//    humidity: data.humidity\n//};\nmsg.payload = {\n    temperature: data.temperature,\n    humidity: data.humidity,\n    date: data.date_time\n};\n\nreturn msg;",
         "outputs": 1,
+        "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 640,
-        "y": 420,
+        "x": 520,
+        "y": 820,
+        "wires": [
+            [
+                "d5a084e34ce85ef1",
+                "d90da14488b551a4",
+                "2149495d3cd51113"
+            ]
+        ]
+    },
+    {
+        "id": "d5a084e34ce85ef1",
+        "type": "debug",
+        "z": "66389bf566fd4d78",
+        "name": "debug 13",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 780,
+        "y": 820,
+        "wires": []
+    },
+    {
+        "id": "d90da14488b551a4",
+        "type": "ui_gauge",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "group": "fbaca792f8086a38",
+        "order": 1,
+        "width": 5,
+        "height": 3,
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "°C",
+        "format": "{{msg.payload.temperature}}",
+        "min": 0,
+        "max": "70",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 790,
+        "y": 880,
+        "wires": []
+    },
+    {
+        "id": "2149495d3cd51113",
+        "type": "ui_gauge",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "group": "fbaca792f8086a38",
+        "order": 2,
+        "width": 5,
+        "height": 3,
+        "gtype": "gage",
+        "title": "Humidity",
+        "label": "%",
+        "format": "{{msg.payload.humidity}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 780,
+        "y": 960,
+        "wires": []
+    },
+    {
+        "id": "9a979ad5ca8807b1",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "function 3",
+        "func": "var tableData2;\n\ntableData2 = flow.get(\"savedData2\") || [];\n\ntableData2.unshift({\n    \"Temperature\": msg.payload.temperature,\n    \"Humidity\": msg.payload.humidity,\n    \"Date\": msg.payload.date\n});\n\nmsg.payload = tableData2;\n\nflow.set(\"savedData2\", tableData2);\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1160,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "99d7315864bc70ba",
+        "type": "ui_table",
+        "z": "66389bf566fd4d78",
+        "group": "fbaca792f8086a38",
+        "name": "",
+        "order": 5,
+        "width": 10,
+        "height": 4,
+        "columns": [
+            {
+                "field": "Date",
+                "title": "Measurement Date",
+                "width": "150",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "Temperature",
+                "title": "Temperature",
+                "width": "150",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "Humidity",
+                "title": "Humidity",
+                "width": "150",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            }
+        ],
+        "outputs": 1,
+        "cts": true,
+        "x": 790,
+        "y": 1040,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4154a6fe37bf5a4b",
+        "type": "sqlite",
+        "z": "66389bf566fd4d78",
+        "mydb": "396207203f0698c5",
+        "sqlquery": "fixed",
+        "sql": "SELECT * FROM Measurement WHERE SensorID=3 ORDER BY MeasurementID DESC LIMIT 1",
+        "name": "NSH Database",
+        "x": 300,
+        "y": 1180,
+        "wires": [
+            [
+                "f24ba94f045283ea"
+            ]
+        ]
+    },
+    {
+        "id": "f24ba94f045283ea",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "Parse S3 dahsboard",
+        "func": "var data = msg.payload[0];\n\n//var measurement = {\n//    date_time: data.date_time,\n//    temperature: data.temperature,\n//    humidity: data.humidity\n//};\nmsg.payload = {\n    temperature: data.temperature,\n    humidity: data.humidity,\n    date: data.date_time\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 1180,
+        "wires": [
+            [
+                "8258acf14fa8b17f",
+                "3f6b6cfe7f811d0e",
+                "1b3f7d217250eb4a"
+            ]
+        ]
+    },
+    {
+        "id": "8258acf14fa8b17f",
+        "type": "debug",
+        "z": "66389bf566fd4d78",
+        "name": "debug 14",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 780,
+        "y": 1180,
+        "wires": []
+    },
+    {
+        "id": "3f6b6cfe7f811d0e",
+        "type": "ui_gauge",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "group": "17e6c037d535ae64",
+        "order": 1,
+        "width": 5,
+        "height": 3,
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "°C",
+        "format": "{{msg.payload.temperature}}",
+        "min": 0,
+        "max": "70",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 790,
+        "y": 1240,
+        "wires": []
+    },
+    {
+        "id": "1b3f7d217250eb4a",
+        "type": "ui_gauge",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "group": "17e6c037d535ae64",
+        "order": 2,
+        "width": 5,
+        "height": 3,
+        "gtype": "gage",
+        "title": "Humidity",
+        "label": "%",
+        "format": "{{msg.payload.humidity}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 780,
+        "y": 1320,
+        "wires": []
+    },
+    {
+        "id": "51b854286e19e796",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "function 4",
+        "func": "var tableData3;\n\ntableData3 = flow.get(\"savedData3\") || [];\n\ntableData3.unshift({\n    \"Temperature\": msg.payload.temperature,\n    \"Humidity\": msg.payload.humidity,\n    \"Date\": msg.payload.date\n});\n\nmsg.payload = tableData3;\n\nflow.set(\"savedData3\", tableData3);\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1160,
+        "y": 580,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "74fe60a2c4fef387",
+        "type": "ui_table",
+        "z": "66389bf566fd4d78",
+        "group": "17e6c037d535ae64",
+        "name": "",
+        "order": 5,
+        "width": 10,
+        "height": 4,
+        "columns": [
+            {
+                "field": "Date",
+                "title": "Measurement Date",
+                "width": "150",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "Temperature",
+                "title": "Temperature",
+                "width": "150",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "Humidity",
+                "title": "Humidity",
+                "width": "150",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            }
+        ],
+        "outputs": 1,
+        "cts": true,
+        "x": 790,
+        "y": 1400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "332cc5d263b943fd",
+        "type": "link in",
+        "z": "66389bf566fd4d78",
+        "name": "link in 4",
+        "links": [
+            "79247b1a0e1eaa4c"
+        ],
+        "x": 155,
+        "y": 460,
+        "wires": [
+            [
+                "d89d62b8544ae029"
+            ]
+        ]
+    },
+    {
+        "id": "9e0c76f2fccbf115",
+        "type": "link in",
+        "z": "66389bf566fd4d78",
+        "name": "link in 5",
+        "links": [
+            "7bc167fa5742925d"
+        ],
+        "x": 155,
+        "y": 820,
+        "wires": [
+            [
+                "d1e3b9b461378a61"
+            ]
+        ]
+    },
+    {
+        "id": "2d6dc7c126cf07cb",
+        "type": "link in",
+        "z": "66389bf566fd4d78",
+        "name": "link in 6",
+        "links": [
+            "a688b2507d40b3c4"
+        ],
+        "x": 155,
+        "y": 1180,
+        "wires": [
+            [
+                "4154a6fe37bf5a4b"
+            ]
+        ]
+    },
+    {
+        "id": "d36e3973e25f9059",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "function 5",
+        "func": "msg.payload = {\n    \"command\": \"clearData\",\n    arguments: []\n}\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 600,
+        "y": 740,
         "wires": [
             [
                 "4bed3fe823846c87"
@@ -181,48 +610,429 @@
         ]
     },
     {
-        "id": "61d8caf8bdb508ad",
-        "type": "mqtt-broker",
-        "name": "Alejo:LocalHost",
-        "broker": "127.0.0.1",
-        "port": "1883",
-        "clientid": "",
-        "autoConnect": true,
-        "usetls": false,
-        "protocolVersion": "4",
-        "keepalive": "60",
-        "cleansession": true,
-        "birthTopic": "",
-        "birthQos": "0",
-        "birthPayload": "",
-        "birthMsg": {},
-        "closeTopic": "",
-        "closeQos": "0",
-        "closePayload": "",
-        "closeMsg": {},
-        "willTopic": "",
-        "willQos": "0",
-        "willPayload": "",
-        "willMsg": {},
-        "userProps": "",
-        "sessionExpiry": ""
+        "id": "ffa0c3a93ad5d68f",
+        "type": "ui_button",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "group": "39ca936b7d56a15e",
+        "order": 4,
+        "width": 5,
+        "height": 1,
+        "passthru": false,
+        "label": "Borrar Tabla",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "red",
+        "className": "",
+        "icon": "fa-trash",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 370,
+        "y": 740,
+        "wires": [
+            [
+                "d36e3973e25f9059"
+            ]
+        ]
     },
     {
-        "id": "17e6c037d535ae64",
+        "id": "62fc6fa4e454f3cb",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "function 6",
+        "func": "msg.payload = {\n    \"command\": \"clearData\",\n    arguments: []\n}\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 600,
+        "y": 1100,
+        "wires": [
+            [
+                "99d7315864bc70ba"
+            ]
+        ]
+    },
+    {
+        "id": "ce77514dd9b35a11",
+        "type": "ui_button",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "group": "fbaca792f8086a38",
+        "order": 4,
+        "width": 5,
+        "height": 1,
+        "passthru": false,
+        "label": "Borrar Tabla",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "red",
+        "className": "",
+        "icon": "fa-trash",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 370,
+        "y": 1100,
+        "wires": [
+            [
+                "62fc6fa4e454f3cb"
+            ]
+        ]
+    },
+    {
+        "id": "f82a8356033852a6",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "function 7",
+        "func": "msg.payload = {\n    \"command\": \"clearData\",\n    arguments: []\n}\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 600,
+        "y": 1460,
+        "wires": [
+            [
+                "74fe60a2c4fef387"
+            ]
+        ]
+    },
+    {
+        "id": "fcfed31cf0d2f148",
+        "type": "ui_button",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "group": "17e6c037d535ae64",
+        "order": 4,
+        "width": 5,
+        "height": 1,
+        "passthru": false,
+        "label": "Borrar Tabla",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "red",
+        "className": "",
+        "icon": "fa-trash",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 370,
+        "y": 1460,
+        "wires": [
+            [
+                "f82a8356033852a6"
+            ]
+        ]
+    },
+    {
+        "id": "ff405345e5377cb4",
+        "type": "inject",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1190,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c0a7bc4c9b258451",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "function 8",
+        "func": "var newData = msg.payload;\nvar oldData = context.get('lastData') || [];\nif (JSON.stringify(newData) !== JSON.stringify(oldData)) {\n    context.set('lastData', newData);\n    msg.payload = newData;\n    return msg;\n} else {\n    return null;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1160,
+        "y": 460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "cd8f33ab9177ba4c",
+        "type": "sqlite",
+        "z": "66389bf566fd4d78",
+        "mydb": "396207203f0698c5",
+        "sqlquery": "fixed",
+        "sql": "SELECT * FROM Measurement WHERE SensorID=1 ORDER BY MeasurementID DESC LIMIT 10",
+        "name": "NSH Database",
+        "x": 380,
+        "y": 680,
+        "wires": [
+            [
+                "e96646716cac971a"
+            ]
+        ]
+    },
+    {
+        "id": "08ca681f78ac31c1",
+        "type": "ui_button",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "group": "39ca936b7d56a15e",
+        "order": 3,
+        "width": 5,
+        "height": 1,
+        "passthru": false,
+        "label": "Traer Datos",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "green",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 170,
+        "y": 680,
+        "wires": [
+            [
+                "cd8f33ab9177ba4c"
+            ]
+        ]
+    },
+    {
+        "id": "e96646716cac971a",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "Parse S1 Table",
+        "func": "var results2 = msg.payload;\nvar parsedData2 = results2.map(data => ({\n    Temperature: data.temperature,\n    Humidity: data.humidity,\n    Date: data.date_time\n}));\n\nmsg.payload = parsedData2;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 680,
+        "wires": [
+            [
+                "4bed3fe823846c87"
+            ]
+        ]
+    },
+    {
+        "id": "b658ff63a9b7df21",
+        "type": "sqlite",
+        "z": "66389bf566fd4d78",
+        "mydb": "396207203f0698c5",
+        "sqlquery": "fixed",
+        "sql": "SELECT * FROM Measurement WHERE SensorID=2 ORDER BY MeasurementID DESC LIMIT 10",
+        "name": "NSH Database",
+        "x": 380,
+        "y": 1040,
+        "wires": [
+            [
+                "250434dc78989286"
+            ]
+        ]
+    },
+    {
+        "id": "ca5f7a825ffb060b",
+        "type": "ui_button",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "group": "fbaca792f8086a38",
+        "order": 3,
+        "width": 5,
+        "height": 1,
+        "passthru": false,
+        "label": "Traer Datos",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "green",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 170,
+        "y": 1040,
+        "wires": [
+            [
+                "b658ff63a9b7df21"
+            ]
+        ]
+    },
+    {
+        "id": "250434dc78989286",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "Parse S2 Table",
+        "func": "var results2 = msg.payload;\nvar parsedData2 = results2.map(data => ({\n    Temperature: data.temperature,\n    Humidity: data.humidity,\n    Date: data.date_time\n}));\n\nmsg.payload = parsedData2;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 1040,
+        "wires": [
+            [
+                "99d7315864bc70ba"
+            ]
+        ]
+    },
+    {
+        "id": "a0e6f1cd9aff5371",
+        "type": "sqlite",
+        "z": "66389bf566fd4d78",
+        "mydb": "396207203f0698c5",
+        "sqlquery": "fixed",
+        "sql": "SELECT * FROM Measurement WHERE SensorID=3 ORDER BY MeasurementID DESC LIMIT 10",
+        "name": "NSH Database",
+        "x": 380,
+        "y": 1400,
+        "wires": [
+            [
+                "26c1a2c1ed849623"
+            ]
+        ]
+    },
+    {
+        "id": "bb321e191c8f48e9",
+        "type": "ui_button",
+        "z": "66389bf566fd4d78",
+        "name": "",
+        "group": "17e6c037d535ae64",
+        "order": 3,
+        "width": 5,
+        "height": 1,
+        "passthru": false,
+        "label": "Traer Datos",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "green",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 170,
+        "y": 1400,
+        "wires": [
+            [
+                "a0e6f1cd9aff5371"
+            ]
+        ]
+    },
+    {
+        "id": "26c1a2c1ed849623",
+        "type": "function",
+        "z": "66389bf566fd4d78",
+        "name": "Parse S3 Table",
+        "func": "var results3 = msg.payload;\nvar parsedData3 = results3.map(data => ({\n    Temperature: data.temperature,\n    Humidity: data.humidity,\n    Date: data.date_time\n}));\n\nmsg.payload = parsedData3;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 1400,
+        "wires": [
+            [
+                "74fe60a2c4fef387"
+            ]
+        ]
+    },
+    {
+        "id": "396207203f0698c5",
+        "type": "sqlitedb",
+        "db": "/home/alejo/nsh1.db",
+        "mode": "RW"
+    },
+    {
+        "id": "39ca936b7d56a15e",
         "type": "ui_group",
-        "name": "PIPON",
-        "tab": "c4d4e4adc2a677e3",
+        "name": "Mediciones",
+        "tab": "a5e37086780bffd2",
         "order": 1,
         "disp": true,
-        "width": "6",
+        "width": "10",
         "collapse": false,
         "className": ""
     },
     {
-        "id": "c4d4e4adc2a677e3",
+        "id": "fbaca792f8086a38",
+        "type": "ui_group",
+        "name": "Mediciones",
+        "tab": "b1ae25f8a71c328d",
+        "order": 2,
+        "disp": true,
+        "width": 10,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "17e6c037d535ae64",
+        "type": "ui_group",
+        "name": "Mediciones",
+        "tab": "750f5542370d7a24",
+        "order": 2,
+        "disp": true,
+        "width": 10,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "a5e37086780bffd2",
         "type": "ui_tab",
-        "name": "Home",
+        "name": "Sensor 1",
         "icon": "dashboard",
+        "order": 3,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "b1ae25f8a71c328d",
+        "type": "ui_tab",
+        "name": "Sensor 2",
+        "icon": "dashboard",
+        "order": 5,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "750f5542370d7a24",
+        "type": "ui_tab",
+        "name": "Sensor 3",
+        "icon": "dashboard",
+        "order": 6,
         "disabled": false,
         "hidden": false
     }
