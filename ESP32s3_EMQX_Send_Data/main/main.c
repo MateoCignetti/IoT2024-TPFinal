@@ -1,9 +1,8 @@
 //CONGIFURE:
-// 1. Set the GPIO pin to which the DS18B20 sensor is connected
-// 2. Set the address of the DS18B20 sensor
-// 3. Set the Wi-Fi SSID and password in "wifi.c"
-// 4. Set the MQTT broker URL
-// 5. Set the topic to which the temperature will be published
+// 1. Set the GPIO pin to which the DHT11 sensor is connected
+// 2. Set the Wi-Fi SSID and password in "wifi.c"
+// 3. Set the MQTT broker URL
+// 4. Set the topic to which the temperature will be published
 
 //Includes
 #include <stdio.h>
@@ -27,6 +26,7 @@
 #define CONFIG_BROKER_URL "mqtt://192.168.43.224:1883"
 #define TOPIC "sensor_1_send"
 #define SENSOR_TYPE DHT_TYPE_DHT11
+#define DELAY_MEASUREMENTS 3000
 
 //Variables
 static const gpio_num_t SENSOR_GPIO = 17;
@@ -65,7 +65,7 @@ void test(void *pvParameter)
             snprintf(temp_str, sizeof(temp_str), "%.0f, %.0f", temperature, humidity);
             mqtt_publish(TOPIC, temp_str);
         }
-        vTaskDelay(pdMS_TO_TICKS(60000));
+        vTaskDelay(pdMS_TO_TICKS(DELAY_MEASUREMENTS));
     }
 }
 
